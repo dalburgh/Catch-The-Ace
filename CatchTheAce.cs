@@ -1,14 +1,21 @@
 ﻿var app = new CatchTheAceSimulator.App();
 
 // Application entry point
-// Usage: .\bin\Debug\net6.0\CatchTheAce [true]
-if (args.Length > 0 && args[0].ToLower() == "true")
+// Usage: .\bin\Debug\net6.0\CatchTheAce [true] [full]
+if (args.Length > 0 && Array.Exists(args, element => element.ToLower() == "true"))
 {
+    if (Array.Exists(args, element => element.ToLower() == "full")) {
+        app.Run(true, true);
+    }
     app.Run(true);
+}
+else if (args.Length > 0 && Array.Exists(args, element => element.ToLower() == "full"))
+{
+    app.Run(false, true);
 }
 else
 {
-    app.Run(false);
+    app.Run();
 }
 
 namespace CatchTheAceSimulator
@@ -16,7 +23,7 @@ namespace CatchTheAceSimulator
     class App
     {
         // Application runtime
-        public void Run(bool argPassed)
+        public void Run(bool diagnosticsBool = false, bool logsBool = false)
         {
             Console.WriteLine("\nWelcome to the Catch the Ace Simulation!\n");
 
@@ -30,29 +37,30 @@ namespace CatchTheAceSimulator
             // Get the number of years to simulate from the user. If the user enters a number less than 1, the user will be reprompted.
             while (yearsToSimulate == 0)
             {
-                Console.Write("How many years would you like to run the simulation? : ");
                 yearsToSimulate = getYears();
             };
 
             // Start the diagnostic stopwatch
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
-            // Run the simulation
-            int wins = Simulate(numberedDeck, yearsToSimulate);
+            // Run the simulation, print logs if the user passed in the argument "full"
+            int wins = logsBool ? Simulate(numberedDeck, yearsToSimulate, true) : Simulate(numberedDeck, yearsToSimulate);
 
             // Stop the stopwatch
             watch.Stop();
 
+            // Calculate the win percentage
+            float winPercentage = (float)wins / yearsToSimulate * 100;
+            Console.WriteLine($"Win Percentage:            {winPercentage}%");
+            
             // If the user passed in the argument "true", print simulation diagnostics
-            if (argPassed)
+            if (diagnosticsBool)
             {
                 float elapsedMs = watch.ElapsedMilliseconds;
-                float winPercentage = (float)wins / yearsToSimulate * 100;
 
-                Console.WriteLine($"Program Execution Time:    {elapsedMs} ms");
                 Console.WriteLine($"Number of Years Simulated: {yearsToSimulate}");
-                Console.WriteLine($"Number of Wins:            {wins}");
-                Console.WriteLine($"Win Percentage:            {winPercentage}%");
+                Console.WriteLine($"Number of Aces in week 52: {wins}");
+                Console.WriteLine($"Program Execution Time:    {elapsedMs} ms");
             }
 
             Console.Write($"Press any key to exit.");
@@ -60,10 +68,20 @@ namespace CatchTheAceSimulator
             System.Environment.Exit(0);
         }
 
+
+        // Gets the number of years to simulate from the user
+        //
+        // Returns
+        //  int: the number of times the Ace was caught on the last week of the year
+        // 
+        // Parameters:
+        //  int[] deck: an array of integers representing a deck of cards
+        //  int yearsToSimulate: the number of years to simulate
         int getYears()
         {
             try
             {
+                Console.Write("How many years would you like to run the simulation? : ");
                 int answer = int.Parse(Console.ReadLine());
                 if (answer > 0)
                 {
@@ -97,7 +115,8 @@ namespace CatchTheAceSimulator
         // Parameters:
         //  int[] deck: an array of integers representing a deck of cards
         //  int yearsToSimulate: the number of years to simulate
-        int Simulate(int[] deck, int yearsToSimulate)
+        //  bool logs: whether or not to print logs to the console
+        int Simulate(int[] deck, int yearsToSimulate, bool logs = false)
         {
             int wins = 0;
             for (int year = 1; year <= yearsToSimulate; year++)
@@ -109,12 +128,18 @@ namespace CatchTheAceSimulator
                     {
                         if (week == 52)
                         {
-                            PrintColoredLine($"Year {year}: the Ace was caught on week {week}, the last week of the year.", ConsoleColor.Green);
+                            if (logs)
+                            {
+                                PrintColoredLine($"Year {year}: the Ace was caught on week {week}, the last week of the year.", ConsoleColor.Green);
+                            }
                             wins++;
                         }
                         else
                         {
-                            PrintColoredLine($"Year {year}: the Ace was caught on week {week}.", ConsoleColor.Red);
+                            if (logs)
+                            {
+                                PrintColoredLine($"Year {year}: the Ace was caught on week {week}.", ConsoleColor.Red);
+                            }
                         }
                         break;
                     }
