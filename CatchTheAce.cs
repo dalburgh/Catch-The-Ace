@@ -2,16 +2,11 @@
 
 // Application entry point
 // Usage: .\bin\Debug\net6.0\CatchTheAce [true] [full]
-if (args.Length > 0 && Array.Exists(args, element => element.ToLower() == "true"))
+if (args.Length > 0)
 {
-    if (Array.Exists(args, element => element.ToLower() == "full")) {
-        app.Run(true, true);
-    }
-    app.Run(true);
-}
-else if (args.Length > 0 && Array.Exists(args, element => element.ToLower() == "full"))
-{
-    app.Run(false, true);
+    bool diagBool = Array.Exists(args, element => element.ToLower() == "true");
+    bool logsBool = Array.Exists(args, element => element.ToLower() == "full");
+    app.Run(diagBool, logsBool);
 }
 else
 {
