@@ -6,6 +6,10 @@ The purpose of this simulator is to determine the probability of the Ace being d
 over a given number of years.
 
 ## Usage
+
+Navigate to the ```<Drive>:\Path\To\Program\Directory\Catch-The-Ace``` directory and run the following \
+command in command prompt or powershell:
+
 ```.\bin\Debug\net6.0\CatchTheAce.exe [true] [full]```
 
 ```true``` is an optional parameter that will display diagnostics regarding the time it took to execute the program, \
