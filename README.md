@@ -7,8 +7,8 @@ over a given number of years.
 
 ## Usage
 
-Navigate to the ```<Drive>:\Path\To\Program\Directory\Catch-The-Ace``` directory and run the following \
-command in command prompt or powershell:
+Navigate to the ```<Drive>:\Path\To\Program\Directory\Catch-The-Ace``` directory and run the following command in \
+command prompt or powershell:
 
 ```.\bin\Debug\net6.0\CatchTheAce.exe [true] [full]```
 
