@@ -4,8 +4,8 @@
 // Usage: .\bin\Debug\net6.0\CatchTheAce [true] [full]
 if (args.Length > 0)
 {
-    bool diagBool = Array.Exists(args, element => element.ToLower() == "true");
-    bool logsBool = Array.Exists(args, element => element.ToLower() == "full");
+    var diagBool = Array.Exists(args, element => element.ToLower() == "true");
+    var logsBool = Array.Exists(args, element => element.ToLower() == "full");
     app.Run(diagBool, logsBool);
 }
 else
@@ -15,6 +15,7 @@ else
 
 namespace CatchTheAceSimulator
 {
+    
     class App
     {
         // Application runtime
@@ -26,76 +27,52 @@ namespace CatchTheAceSimulator
             Console.WriteLine("This program will simulate the Catch the Ace game for a given number of years");
             Console.WriteLine("to determine the probability of the Ace being caught on the last week of the year.\n");
 
-            // Create an unshuffled deck of cards
-            int[] numberedDeck = CreateUnshuffledDeck();
+            Deck unshuffledDeck = new Deck();
 
-            // Get the number of years to simulate from the user
-            int yearsToSimulate = getYears();
+            var yearsToSimulate = UI.GetYears();
 
-            // Start the diagnostic stopwatch
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
             // Run the simulation, print logs if the user passed in the argument "full"
-            int wins = logsBool ? Simulate(numberedDeck, yearsToSimulate, true) : Simulate(numberedDeck, yearsToSimulate);
+            var (wins, data) = logsBool ? Simulate(unshuffledDeck, yearsToSimulate, true) : Simulate(unshuffledDeck, yearsToSimulate);
 
-            // Stop the stopwatch
             watch.Stop();
 
+            // Print yearly logs if the user passed in the argument "full"
+            if (logsBool)
+            {
+                data.ForEach((result) =>
+                {
+                    var (isWin, message) = ((bool, string))result;
+
+                    if (isWin)
+                    {
+                        UI.PrintColoredLine(message, ConsoleColor.Green);
+                    }
+                    else
+                    {
+                        UI.PrintColoredLine(message, ConsoleColor.Red);
+                    }
+                });
+            }
+
             // Calculate the win percentage
-            float winPercentage = (float)wins / yearsToSimulate * 100;
-            Console.WriteLine($"Win Percentage:            {winPercentage}%");
+            decimal winPercentage = Decimal.Round(((decimal)wins / yearsToSimulate) * 100, 5);
+            Console.WriteLine($"Win Percentage:            {(winPercentage)}%");
 
             // If the user passed in the argument "true", print simulation diagnostics
             if (diagnosticsBool)
             {
-                float elapsedMs = watch.ElapsedMilliseconds;
+                var elapsedMs = watch.ElapsedMilliseconds;
 
                 Console.WriteLine($"Number of Years Simulated: {yearsToSimulate}");
                 Console.WriteLine($"Number of Aces in week 52: {wins}");
                 Console.WriteLine($"Program Execution Time:    {elapsedMs} ms");
             }
 
-            // Exit the program 
             Console.Write($"Press any key to exit.");
             Console.ReadKey();
             System.Environment.Exit(0);
-        }
-
-
-        // Gets the number of years to simulate from the user
-        //
-        // Returns
-        //  int: the number of times the Ace was caught on the last week of the year
-        // 
-        // Parameters:
-        //  int[] deck: an array of integers representing a deck of cards
-        //  int yearsToSimulate: the number of years to simulate
-        int getYears()
-        {
-            int answer = 0;
-            while (answer <= 0)
-            {
-                try
-                {
-                    Console.Write("How many years would you like to run the simulation? : ");
-                    answer = int.Parse(Console.ReadLine());
-                    if (answer <= 0)
-                    {
-                        PrintColoredLine("Please enter a number greater than 0.", ConsoleColor.Red);
-                    }
-                }
-                catch (FormatException)
-                {
-                    PrintColoredLine("Please enter a valid number.", ConsoleColor.Red);
-                }
-                catch (Exception e)
-                {
-                    PrintColoredLine("An unknown error has occured, please try running the program again.", ConsoleColor.Red);
-                    PrintColoredLine(e.Message, ConsoleColor.Red);
-                    System.Environment.Exit(1);
-                }
-            }
-            return answer;
         }
 
         // Simulates the Catch the Ace game for a given number of years
@@ -106,22 +83,23 @@ namespace CatchTheAceSimulator
         // Parameters:
         //  int[] deck: an array of integers representing a deck of cards
         //  int yearsToSimulate: the number of years to simulate
-        //  bool logs: whether or not to print logs to the console
-        int Simulate(int[] deck, int yearsToSimulate, bool logs = false)
+        //  bool logs: whether or not to add logs to the results list
+        (int wins, List<(bool, string)> results) Simulate(Deck deck, int yearsToSimulate, bool logs = false)
         {
-            int wins = 0;
-            for (int year = 1; year <= yearsToSimulate; year++)
+            var wins = 0;
+            List<(bool, string)> results = new List<(bool, string)>();
+            for (var year = 1; year <= yearsToSimulate; year++)
             {
-                deck = ShuffleDeck(deck);
-                for (int week = 1; week <= 52; week++)
+                deck.cards = deck.Shuffle();
+                for (var week = 1; week <= Deck.NumberOfCardsInDeck; week++)
                 {
-                    if (deck[week - 1] == 52)
+                    if (deck.cards[week - 1] == Deck.NumberOfCardsInDeck)
                     {
-                        if (week == 52)
+                        if (week == Deck.NumberOfCardsInDeck)
                         {
                             if (logs)
                             {
-                                PrintColoredLine($"Year {year}: the Ace was caught on week {week}, the last week of the year.", ConsoleColor.Green);
+                                results.Add((true, $"Year {year}: the Ace was caught on week {week}, the last week of the year."));
                             }
                             wins++;
                         }
@@ -129,44 +107,83 @@ namespace CatchTheAceSimulator
                         {
                             if (logs)
                             {
-                                PrintColoredLine($"Year {year}: the Ace was caught on week {week}.", ConsoleColor.Red);
+                                results.Add((false, $"Year {year}: the Ace was caught on week {week}."));
                             }
                         }
                         break;
                     }
                 }
             }
-            return wins;
+            return (wins, results);
         }
+    }
 
-        int[] CreateUnshuffledDeck()
+    class Deck
+    {
+        public const int NumberOfCardsInDeck = 52;
+        public int[] cards { get; set; }
+        public Deck()
         {
-            int[] deck = new int[52];
-            for (int i = 0; i < deck.Length; i++)
+            cards = new int[52];
+            for (var i = 0; i < cards.Length; i++)
             {
-                deck[i] = i + 1;
+                cards[i] = i + 1;
             }
-            return deck;
         }
-
-        int[] ShuffleDeck(int[] deck)
+        public int[] Shuffle()
         {
             Random random = new Random();
-            for (int i = 0; i < deck.Length; i++)
+            for (var i = 0; i < cards.Length; i++)
             {
-                int randomIndex = random.Next(0, deck.Length);
-                int temp = deck[i];
-                deck[i] = deck[randomIndex];
-                deck[randomIndex] = temp;
+                var randomIndex = random.Next(0, this.cards.Length);
+                var temp = this.cards[i];
+                this.cards[i] = this.cards[randomIndex];
+                this.cards[randomIndex] = temp;
             }
-            return deck;
+            return cards;
         }
+    }
 
-        void PrintColoredLine(string text, ConsoleColor color)
+    class UI
+    {
+        public static void PrintColoredLine(string text, ConsoleColor color)
         {
             Console.ForegroundColor = color;
             Console.WriteLine(text, Console.ForegroundColor);
             Console.ResetColor();
+        }
+
+
+        // Gets the number of years to simulate from the user
+        //
+        // Returns
+        //  int: the number of years to simulate
+        public static int GetYears()
+        {
+            var answer = 0;
+            while (answer <= 0)
+            {
+                try
+                {
+                    Console.Write("How many years would you like to run the simulation? : ");
+                    answer = int.Parse(Console.ReadLine());
+                    if (answer <= 0)
+                    {
+                        UI.PrintColoredLine("Please enter a number greater than 0.", ConsoleColor.Red);
+                    }
+                }
+                catch (FormatException)
+                {
+                    UI.PrintColoredLine("Please enter a valid number.", ConsoleColor.Red);
+                }
+                catch (Exception e)
+                {
+                    UI.PrintColoredLine("An unknown error has occured, please try running the program again.", ConsoleColor.Red);
+                    UI.PrintColoredLine(e.Message, ConsoleColor.Red);
+                    System.Environment.Exit(1);
+                }
+            }
+            return answer;
         }
     }
 }
