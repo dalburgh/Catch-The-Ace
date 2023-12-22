@@ -2,8 +2,7 @@
 
 This is a simulator for the Catch the Ace game as described by [The Alcohol and Gaming Commission of Ontario](https://www.agco.ca/lottery-and-gaming/catch-ace-faqs).
 
-The purpose of this simulator is to determine the probability of the Ace being drawn in the last week of the year \
-over a given number of years.
+The purpose of this simulator is to determine the probability of the Ace being drawn in the last week of the year over a given number of years.
 
 ## Usage
 
